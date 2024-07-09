@@ -62,7 +62,7 @@ namespace MoP
     {
         public override string Name => "MeravsScale";
 
-        public override Bitmap Icon => Properties.Resources.MS_logo;
+        public override Bitmap Icon => null;
       
         public override string Description => "A component to scale geometries in Grasshopper";
 
