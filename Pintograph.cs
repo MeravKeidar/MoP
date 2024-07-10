@@ -20,6 +20,7 @@ namespace MoP
             pManager.AddNumberParameter("Radius2", "R2", "Radius of the second disk", GH_ParamAccess.item);
             pManager.AddNumberParameter("Speed2", "S2", "Speed of the second disk", GH_ParamAccess.item);
             pManager.AddNumberParameter("Time", "T", "Time parameter", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Rod Length", "L", "Rod Length", GH_ParamAccess.item);
         }
 
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
@@ -36,6 +37,7 @@ namespace MoP
             double r2 = 0;
             double s2 = 0;
             double t = 0;
+            double l = 0;
 
             if (!DA.GetData(0, ref d)) return;
             if (!DA.GetData(1, ref r1)) return;
@@ -43,6 +45,7 @@ namespace MoP
             if (!DA.GetData(3, ref r2)) return;
             if (!DA.GetData(4, ref s2)) return;
             if (!DA.GetData(5, ref t)) return;
+            if (!DA.GetData(6, ref l)) return;
 
             // Disks centers
             Point3d p1 = new Point3d(0, 0, 0);
@@ -52,9 +55,8 @@ namespace MoP
             Point3d A = new Point3d(p1.X + r1 * Math.Cos(s1 * t), p1.Y + r1 * Math.Sin(s1 * t), p1.Z);
             Point3d B = new Point3d(p2.X + r2 * Math.Cos(s2 * t), p2.Y + r2 * Math.Sin(s2 * t), p2.Z);
 
-            // Assume lengths of the rods from A to H and B to H
-            double l1 = 10.0; // Length of the rod from A to H
-            double l2 = 10.0; // Length of the rod from B to H
+            double l1 = l; // Length of the rod from A to H
+            double l2 = l; // Length of the rod from B to H
 
             // Find intersection point H of rods from A and B
             Point3d H = FindIntersection(A, l1, B, l2, 0);
@@ -63,9 +65,8 @@ namespace MoP
             Point3d C = H + (H - A);
             Point3d D = H + (H - B);
 
-            // Assume lengths of rods from C to E and D to E
-            double l3 = 10.0; // Length from C to E
-            double l4 = 10.0; // Length from D to E
+            double l3 = l; // Length from C to E
+            double l4 = l; // Length from D to E
             Point3d E = FindIntersection(C, l3, D, l4, 1);
 
             // Create the circles
@@ -90,7 +91,6 @@ namespace MoP
             geometry.Add(rod5.ToNurbsCurve());
             geometry.Add(rod6.ToNurbsCurve());
 
-            
             DA.SetDataList(0, geometry);
             DA.SetData(1, E);
         }
