@@ -2,6 +2,7 @@
 using Rhino.Geometry;
 using System.Collections.Generic;
 using System;
+using Rhino.Geometry.Intersect;
 
 namespace MoP
 {
@@ -20,12 +21,18 @@ namespace MoP
             pManager.AddNumberParameter("Radius2", "R2", "Radius of the second disk", GH_ParamAccess.item);
             pManager.AddNumberParameter("Speed2", "S2", "Speed of the second disk", GH_ParamAccess.item);
             pManager.AddNumberParameter("Time", "T", "Time parameter", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Rod Length", "L", "Rod Length", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Rod Length", "L1", "Rod 1 Length", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Rod Length", "L2", "Rod 2 Length", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Rod Length", "L3", "Rod 3 Length", GH_ParamAccess.item); 
+            pManager.AddNumberParameter("Rod Length", "L4", "Rod 4 Length", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Rod Length", "L5", "Rod 5 Length", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Rod Length", "L6", "Rod 6 Length", GH_ParamAccess.item);
         }
 
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddCurveParameter("Geometry", "G", "Generated pintograph geometry", GH_ParamAccess.list);
+            pManager.AddPointParameter("Intersection", "I", " Rod intersection point", GH_ParamAccess.list);
             pManager.AddPointParameter("Path", "P", "Generated pintograph path", GH_ParamAccess.list);
         }
 
@@ -37,7 +44,12 @@ namespace MoP
             double r2 = 0;
             double s2 = 0;
             double t = 0;
-            double l = 0;
+            double l1 = 0; // Length of the rod from A to H
+            double l2 = 0; // Length of the rod from B to H
+            double l3 = 0; // Length of the rod from H to C
+            double l4 = 0; // Length of the rod from H to D
+            double l5 = 0; // Length of the rod from C to E
+            double l6 = 0; // Length of the rod from D to E
 
             if (!DA.GetData(0, ref d)) return;
             if (!DA.GetData(1, ref r1)) return;
@@ -45,7 +57,12 @@ namespace MoP
             if (!DA.GetData(3, ref r2)) return;
             if (!DA.GetData(4, ref s2)) return;
             if (!DA.GetData(5, ref t)) return;
-            if (!DA.GetData(6, ref l)) return;
+            if (!DA.GetData(6, ref l1)) return;
+            if (!DA.GetData(7, ref l2)) return;
+            if (!DA.GetData(8, ref l3)) return;
+            if (!DA.GetData(9, ref l4)) return;
+            if (!DA.GetData(10, ref l5)) return;
+            if (!DA.GetData(11, ref l6)) return;
 
             // Disks centers
             Point3d p1 = new Point3d(0, 0, 0);
@@ -55,19 +72,16 @@ namespace MoP
             Point3d A = new Point3d(p1.X + r1 * Math.Cos(s1 * t), p1.Y + r1 * Math.Sin(s1 * t), p1.Z);
             Point3d B = new Point3d(p2.X + r2 * Math.Cos(s2 * t), p2.Y + r2 * Math.Sin(s2 * t), p2.Z);
 
-            double l1 = l; // Length of the rod from A to H
-            double l2 = l; // Length of the rod from B to H
 
             // Find intersection point H of rods from A and B
             Point3d H = FindIntersection(A, l1, B, l2, 0);
 
             // Calculate points C and D
-            Point3d C = H + (H - A);
-            Point3d D = H + (H - B);
+            Point3d C = H + (l4 / l1) * (H - A);
+            Point3d D = H + (l3 / l2) * (H - B);
 
-            double l3 = l; // Length from C to E
-            double l4 = l; // Length from D to E
-            Point3d E = FindIntersection(C, l3, D, l4, 1);
+
+            Point3d E = FindIntersection(C, l5, D, l6, 1);
 
             // Create the circles
             Circle circle1 = new Circle(p1, r1);
@@ -92,7 +106,8 @@ namespace MoP
             geometry.Add(rod6.ToNurbsCurve());
 
             DA.SetDataList(0, geometry);
-            DA.SetData(1, E);
+            DA.SetData(1, H);
+            DA.SetData(2, E);
         }
 
         private Point3d FindIntersection(Point3d P1, double L1, Point3d P2, double L2, int direction)
