@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FFT.cs" />
+    <Compile Include="MotorCommand.cs" />
     <Compile Include="Pintograph.cs" />
     <Compile Include="MeravsScale.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
