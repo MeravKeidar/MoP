@@ -43,8 +43,10 @@
   <ItemGroup>
     <Compile Include="FFT.cs" />
     <Compile Include="MotorCommand.cs" />
-    <Compile Include="Pintograph.cs" />
     <Compile Include="MeravsScale.cs" />
+    <Compile Include="old_pinto.cs" />
+    <Compile Include="Pinto.cs" />
+    <Compile Include="Pintograph.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
