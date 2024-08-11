@@ -14,7 +14,11 @@ namespace MoP
         private DateTime _start = DateTime.MinValue;
         private bool _isRunning = false;
         private List<Point3d> _pathPoints = new List<Point3d>();
-        private double _lastElapsedTime = 0;
+        List<Curve> _geometry = new List<Curve>();
+        Point3d _lastH;
+        Point3d _lastE;
+        Point3d _lastP;
+
 
         public Time_PintoGraph()
           : base("Time_PintoGraph", "T_Pintograph", "Simulates a pintograph drawing machine", "Category", "Subcategory")
@@ -40,6 +44,7 @@ namespace MoP
             pManager.AddPointParameter("Second Intersection", "I2", "Second rod intersection point", GH_ParamAccess.item);
             pManager.AddPointParameter("Current Position", "P", "Current position of point P", GH_ParamAccess.item);
             pManager.AddCurveParameter("Path", "Path", "Path of point P during the runtime", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Time", "Time", "Current Time", GH_ParamAccess.item);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
@@ -62,12 +67,11 @@ namespace MoP
             if (!DA.GetDataList(6, directions)) return;
             if (!DA.GetDataList(7, lengths)) return;
 
-            if (reset || _start == DateTime.MinValue)
+            if (reset)
             {
                 _start = DateTime.Now;
                 _isRunning = false;
-                _pathPoints.Clear();
-                _lastElapsedTime = 0;
+                 _pathPoints.Clear();
             }
 
             if (start)
@@ -75,20 +79,31 @@ namespace MoP
                 _isRunning = true;
             }
 
-            if (!_isRunning)
-            {
-                return;
-            }
 
             double elapsedTime = (DateTime.Now - _start).TotalSeconds;
+            double t = elapsedTime;
+
             if (elapsedTime > runtime)
             {
                 _isRunning = false;
+                
+            }
+
+            if (!_isRunning)
+            {
+                Polyline last_pathPolyline = new Polyline(_pathPoints);
+                Curve last_pathCurve = last_pathPolyline.ToNurbsCurve();
+                // Output data
+                DA.SetDataList(0, _geometry);
+                DA.SetData(1, _lastH); // First intersection
+                DA.SetData(2, _lastE); // Second intersection
+                DA.SetData(3, _lastP); // Current position of P
+                DA.SetData(4, last_pathCurve); // Path of all points P
+                DA.SetData(5, 0); // time
                 return;
             }
 
-            double t = elapsedTime;
-          
+
             // Validate list lengths
             if (radii.Count != 3) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Radii list must contain exactly 3 values."); return; }
             if (speeds.Count != 3) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Speeds list must contain exactly 3 values."); return; }
@@ -146,19 +161,30 @@ namespace MoP
                 rod5.ToNurbsCurve(),
                 rod6.ToNurbsCurve()
             };
+            _geometry = geometry;
+            _lastH = H;
+            _lastE = E;
+            _lastP = P;
 
-            // Collect the current position of point P
-            _pathPoints.Add(P);
-            // Create a polyline from the path points
+           
+            Transform pointRotation = Transform.Rotation(omega3 * t, p3);
+            Point3d rotatedP = P;
+            rotatedP.Transform(pointRotation);
+            _pathPoints.Add(rotatedP);
             Polyline pathPolyline = new Polyline(_pathPoints);
             Curve pathCurve = pathPolyline.ToNurbsCurve();
-
+            Transform canvasRotation = Transform.Rotation(-omega3 * t, p3);
+            if (pathCurve != null)
+            {
+                pathCurve.Transform(canvasRotation);
+            }
             // Output data
             DA.SetDataList(0, geometry);
             DA.SetData(1, H); // First intersection
             DA.SetData(2, E); // Second intersection
             DA.SetData(3, P); // Current position of P
-            DA.SetData(4, pathCurve); // Path of point P
+            DA.SetData(4, pathCurve); // Path of all points P
+            DA.SetData(5, t); // time
         }
 
        
